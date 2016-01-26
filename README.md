@@ -1,8 +1,9 @@
 # SiteDumper
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/site_dumper`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Once every programmer realizes that it was necessary to make a dumps.
+SiteDumper creates a dump,
+which includes a database dump and an archive of assets (it may includes pictures and other user generated content).
+Dump is sent to the admin email.
 
 ## Installation
 
@@ -16,13 +17,21 @@ And then execute:
 
     $ bundle
 
-Or install it yourself as:
+Generate config files:
 
-    $ gem install site_dumper
+    $ rails g site_dumper:install
+
+Specify emails and other options in `config/initializers/site_dumper.rb`
 
 ## Usage
 
-TODO: Write usage instructions here
+You can create and send dump using rake task:
+
+    $ rake site_dumper:dump
+
+For example, you can add cron job for every day backup:
+
+    $ 0 0 *   *   *   cd <app_path> && bundle exec rake site_dumper:dump
 
 ## Development
 
