@@ -27,11 +27,11 @@ Specify emails and other options in `config/initializers/site_dumper.rb`
 
 You can create and send dump using rake task:
 
-    $ rake site_dumper:dump
+    $ RAILS_ENV=production bundle exec rake site_dumper:dump
 
 For example, you can add cron job for every day backup:
 
-    $ 0 0 *   *   *   cd <app_path> && bundle exec rake site_dumper:dump
+    $ 0 0 *   *   *   cd <app_path> && RAILS_ENV=production bundle exec rake site_dumper:dump
 
 ## Development
 
