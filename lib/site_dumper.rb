@@ -43,7 +43,7 @@ module SiteDumper
         false
       ensure
         if d && File.exist?(d.tmp_dir)
-          FileUtils.rm(d.tmp_dir)
+          FileUtils.rm_rf(d.tmp_dir)
         end
       end
     end
