@@ -6,38 +6,62 @@ class SiteDumper::Dumper
   # @attr_reader [Array<String>, nil] Array of errors that occurred during dump generation
   attr_reader :errors
 
-  # @attr_reader [String] archive with all dump parts
-  attr_reader :result_filepath
+  # @attr_reader Array<String> archive with all dump parts
+  attr_reader :result_filepaths
+
+  attr_reader :tmp_dir
 
   # @param [Hash]
-  # @option dumped_filepaths [String]
+  # @option dumped_filepaths [String, Array<String>]
   def initialize(config)
     @config = HashWithIndifferentAccess.new(config)
   end
 
   # Create archive with all required dump data
   def create
-    tmp_dir = File.join(Rails.root, 'tmp', 'site_dumper', Time.new.to_i.to_s)
+    @tmp_dir = File.join(Rails.root, 'tmp', 'site_dumper', Time.new.to_i.to_s)
     dumped_filepaths = (@config[:dumped_filepaths] || []).select{|path| Dir.exist?(path) }
-    FileUtils.mkdir_p(tmp_dir)
-    files = dump_filepaths(File.join(tmp_dir, 'files.tar.gz'), dumped_filepaths) if dumped_filepaths.present?
-    database = dump_database(File.join(tmp_dir, 'database.sql.gz'))
+    FileUtils.mkdir_p(@tmp_dir)
+    files = dump_filepaths(File.join(@tmp_dir, 'files.tar.gz'), dumped_filepaths) if dumped_filepaths.present?
+    database = dump_database(File.join(@tmp_dir, 'database.sql.gz'))
+    full_dump = nil
     if [files, database].compact.present?
-      @result_filepath = \
-        dump_filepaths(File.join(tmp_dir, "dump_#{Time.new.strftime('%Y-%m-%d')}.tar"),
+      @result_filepaths = \
+        dump_filepaths(File.join(@tmp_dir, "dump_#{Time.new.strftime('%Y-%m-%d')}.tar"),
                        [files, database].compact,
-                       tmp_dir, false)
+                       @tmp_dir, false)
+      if @config[:max_email_size] && (limit = to_bytes(@config[:max_email_size])) > 0 &&
+          File.size(@result_filepaths) > limit
+        output = @result_filepaths + '.'
+        full_dump = @result_filepaths
+        cmd("split -b #{limit} #{@result_filepaths} #{output}")
+        @result_filepaths = Dir[output + '*'].sort
+      end
+      @result_filepaths
     end
   ensure
-    FileUtils.rm_rf([files, database].compact) if [files, database].compact.present?
-  end
-
-  # @return [String] archive with all dump parts
-  def result_filepath
-    @result_filepath
+    FileUtils.rm_rf([files, database, full_dump].compact) if [files, database, full_dump].compact.present?
   end
 
   protected
+
+  def to_bytes(msg)
+    if msg.is_a?(String)
+      number = msg.to_i
+      case msg.downcase
+        when /kb/
+          1024
+        when /mb/
+          1024 ** 2
+        when /gb/
+          1024 ** 3
+        else
+          1
+      end * number
+    else
+      msg.to_i
+    end
+  end
 
   def dump_filepaths(to_file, source_filepaths, root = Rails.root, gzip = true)
     without_root = source_filepaths.map { |path| path.to_s.sub("#{root}/", '') }

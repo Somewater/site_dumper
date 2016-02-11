@@ -9,4 +9,7 @@ SiteDumper.setup do |config|
 
   ## default email for "from" field
   config.robot_email = '<robot@mysite.com>'
+
+  ## if email exceeds size limit of SMTP server dump will be sliced by parts
+  config.max_email_size = '10 Mb' # Kb, Mb, Gb
 end
