@@ -11,6 +11,8 @@ module SiteDumper
 
   mattr_accessor :max_email_size
 
+  mattr_accessor :sleep_between_parts
+
   class << self
     def setup
       yield self
@@ -32,6 +34,7 @@ module SiteDumper
           d.result_filepaths.each_with_index do |filepath, index|
             Mailer.dump_part(robot_email, admin_email, filepath, Time.new.to_formatted_s(:db),
                              index, d.result_filepaths.size).deliver!
+            sleep(sleep_between_parts) if sleep_between_parts.to_i > 0
           end
           true
         else

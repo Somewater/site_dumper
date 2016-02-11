@@ -12,4 +12,6 @@ SiteDumper.setup do |config|
 
   ## if email exceeds size limit of SMTP server dump will be sliced by parts
   config.max_email_size = '10 Mb' # Kb, Mb, Gb
+  ## sleep between sending of parts (to avoid falling into the spam)
+  # config.sleep_between_parts = 10 # seconds
 end
